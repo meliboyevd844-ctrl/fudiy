@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Do'kon Keldi-Ketdi Skaner</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <!-- Telegram Web App JS -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- HTML5 QR Code Scanner Library (CDN & Local fallback) -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- Header Section -->
+    <div class="header-card">
+      <div id="action-badge" class="header-badge">Qayd etish</div>
+      <h1 id="action-title" class="header-title">QR Kodni Skanerlang</h1>
+      <p id="action-subtitle" class="header-subtitle">Do'konda joylashgan QR kodni kameraga to'g'irlang</p>
+      <div class="security-tag">🛡️ 50m GPS + Jonli Selfie Himoyasi</div>
+    </div>
+
+    <!-- Geolocation Status Card -->
+    <div id="geo-status-card" class="location-status">
+      <div id="geo-icon" class="location-icon badge-pulse">📍</div>
+      <div class="location-info">
+        <div id="geo-status-title" class="location-title">GPS Lokatsiya aniqlanmoqda...</div>
+        <div id="geo-status-desc" class="location-desc">Iltimos, lokatsiyaga ruxsat bering</div>
+      </div>
+    </div>
+
+    <!-- Step 1: Scanner Viewport Area -->
+    <div id="scanner-section" class="scanner-card">
+      <div id="reader"></div>
+      
+      <div id="camera-fallback-ui" style="display: none; padding: 24px; text-align: center; width: 100%;">
+        <div style="font-size: 36px; margin-bottom: 12px;">📷</div>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">
+          Kamera orqali skanerlash uchun quyidagi tugmani bosing yoki Telegram QR skaneridan foydalaning.
+        </p>
+        <button id="btn-native-scan" class="btn-primary">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+          </svg>
+          Telegram QR Skanerni ochish
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 2: Live Selfie Capture Step -->
+    <div id="selfie-section" class="scanner-card" style="display: none; padding: 20px;">
+      <h3 style="margin-bottom: 8px; font-size: 17px; color: #38bdf8;">📸 2-bosqich: Jonli Yuz Tasdiqlash</h3>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px; text-align: center;">
+        Xavfsizlik uchun yuzingizni kameraga qaratib rasmga tushing:
+      </p>
+      
+      <div class="selfie-frame">
+        <video id="selfie-video" autoplay playsinline muted></video>
+        <canvas id="selfie-canvas" style="display: none;"></canvas>
+      </div>
+
+      <button id="btn-capture-selfie" class="btn-primary" style="margin-top: 16px;">
+        📸 Rasmga olish va Tasdiqlash
+      </button>
+    </div>
+
+    <!-- Result / Status Card (Success or Error) -->
+    <div id="result-card" class="result-card">
+      <div id="result-icon" class="result-icon">✓</div>
+      <h2 id="result-title" class="result-title">Qayd etildi!</h2>
+      <p id="result-desc" class="result-desc">Kelgan vaqtingiz muvaffaqiyatli saqlandi.</p>
+      
+      <div class="details-box">
+        <div class="details-row">
+          <span class="details-label">Vaqt:</span>
+          <span id="detail-time" class="details-val">--:--</span>
+        </div>
+        <div class="details-row">
+          <span class="details-label">Masofa:</span>
+          <span id="detail-distance" class="details-val">-- metr</span>
+        </div>
+        <div class="details-row">
+          <span class="details-label">Holat:</span>
+          <span id="detail-status" class="details-val">Ruxsat berildi</span>
+        </div>
+      </div>
+
+      <button id="btn-close-webapp" class="btn-primary">Botga qaytish</button>
+    </div>
+
+    <!-- Manual Location Refresh / Action -->
+    <button id="btn-refresh-location" class="btn-secondary" style="display: none;">
+      🔄 Lokatsiyani qayta tekshirish
+    </button>
+
+  </div>
+
+  <!-- App Logic -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
