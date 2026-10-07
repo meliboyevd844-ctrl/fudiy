@@ -8,7 +8,7 @@ from config import DB_PATH
 
 async def get_setting(key: str, default: str = "") -> str:
     """Get a setting value by key."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         async with db.execute("SELECT value FROM settings WHERE key = ?", (key,)) as cursor:
             row = await cursor.fetchone()
             return row[0] if row else default
@@ -16,7 +16,7 @@ async def get_setting(key: str, default: str = "") -> str:
 
 async def set_setting(key: str, value: str):
     """Set or update a setting value."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         await db.execute("""
             INSERT INTO settings (key, value) VALUES (?, ?)
             ON CONFLICT(key) DO UPDATE SET value = excluded.value;
@@ -26,7 +26,7 @@ async def set_setting(key: str, value: str):
 
 async def get_all_settings() -> Dict[str, str]:
     """Get all settings as a key-value dictionary."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         async with db.execute("SELECT key, value FROM settings") as cursor:
             rows = await cursor.fetchall()
             return {row[0]: row[1] for row in rows}
@@ -36,7 +36,7 @@ async def get_all_settings() -> Dict[str, str]:
 
 async def is_admin(telegram_id: int) -> bool:
     """Check if a telegram user is a verified admin."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         async with db.execute("SELECT 1 FROM admin_users WHERE telegram_id = ? AND is_active = 1", (telegram_id,)) as cursor:
             return (await cursor.fetchone()) is not None
 
@@ -68,7 +68,7 @@ async def update_admin_credentials(new_login: str, new_password: str):
 
 async def add_admin(telegram_id: int):
     """Authorize a telegram user as admin."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         await db.execute("""
             INSERT OR REPLACE INTO admin_users (telegram_id, is_active) VALUES (?, 1);
         """, (telegram_id,))
@@ -82,7 +82,7 @@ async def get_all_admin_ids() -> List[int]:
     if ADMIN_ID:
         admin_set.add(ADMIN_ID)
 
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         async with db.execute("SELECT telegram_id FROM admin_users WHERE is_active = 1") as cursor:
             rows = await cursor.fetchall()
             for row in rows:
@@ -100,7 +100,7 @@ async def get_all_admin_ids() -> List[int]:
 
 async def get_employee_by_tg_id(telegram_id: int) -> Optional[Dict[str, Any]]:
     """Fetch employee by their Telegram ID."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         db.row_factory = aiosqlite.Row
         async with db.execute("SELECT * FROM employees WHERE telegram_id = ?", (telegram_id,)) as cursor:
             row = await cursor.fetchone()
@@ -109,7 +109,7 @@ async def get_employee_by_tg_id(telegram_id: int) -> Optional[Dict[str, Any]]:
 
 async def get_employee_by_id(employee_id: int) -> Optional[Dict[str, Any]]:
     """Fetch employee by internal ID."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         db.row_factory = aiosqlite.Row
         async with db.execute("SELECT * FROM employees WHERE id = ?", (employee_id,)) as cursor:
             row = await cursor.fetchone()
@@ -118,7 +118,7 @@ async def get_employee_by_id(employee_id: int) -> Optional[Dict[str, Any]]:
 
 async def get_employee_by_login(login: str) -> Optional[Dict[str, Any]]:
     """Fetch employee by their Login username."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         db.row_factory = aiosqlite.Row
         async with db.execute("SELECT * FROM employees WHERE login = ?", (login,)) as cursor:
             row = await cursor.fetchone()
@@ -127,7 +127,7 @@ async def get_employee_by_login(login: str) -> Optional[Dict[str, Any]]:
 
 async def register_or_update_employee(telegram_id: int, full_name: str, username: str, phone: str) -> int:
     """Create or update pending employee registration request."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         async with db.execute("""
             INSERT INTO employees (telegram_id, full_name, username, phone, is_approved, is_logged_in)
             VALUES (?, ?, ?, ?, 0, 0)
@@ -147,7 +147,7 @@ async def register_or_update_employee(telegram_id: int, full_name: str, username
 
 async def approve_employee(employee_id: int, login: str, password: str) -> bool:
     """Approve an employee and assign credentials."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         await db.execute("""
             UPDATE employees
             SET login = ?, password = ?, is_approved = 1, is_logged_in = 1
@@ -159,21 +159,21 @@ async def approve_employee(employee_id: int, login: str, password: str) -> bool:
 
 async def set_employee_login_status(employee_id: int, is_logged_in: bool):
     """Update employee login status."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         await db.execute("UPDATE employees SET is_logged_in = ? WHERE id = ?", (1 if is_logged_in else 0, employee_id))
         await db.commit()
 
 
 async def link_telegram_id_to_employee(employee_id: int, telegram_id: int):
     """Link an employee account to a telegram ID."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         await db.execute("UPDATE employees SET telegram_id = ?, is_logged_in = 1 WHERE id = ?", (telegram_id, employee_id))
         await db.commit()
 
 
 async def get_all_approved_employees() -> List[Dict[str, Any]]:
     """Fetch all approved active employees."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         db.row_factory = aiosqlite.Row
         async with db.execute("SELECT * FROM employees WHERE is_approved = 1 ORDER BY full_name ASC") as cursor:
             rows = await cursor.fetchall()
@@ -182,7 +182,7 @@ async def get_all_approved_employees() -> List[Dict[str, Any]]:
 
 async def get_all_pending_employees() -> List[Dict[str, Any]]:
     """Fetch pending employee registration requests."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         db.row_factory = aiosqlite.Row
         async with db.execute("SELECT * FROM employees WHERE is_approved = 0 ORDER BY created_at DESC") as cursor:
             rows = await cursor.fetchall()
@@ -191,7 +191,7 @@ async def get_all_pending_employees() -> List[Dict[str, Any]]:
 
 async def delete_employee(employee_id: int):
     """Delete an employee and their records."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         await db.execute("DELETE FROM employees WHERE id = ?", (employee_id,))
         await db.commit()
 
@@ -200,7 +200,7 @@ async def delete_employee(employee_id: int):
 
 async def get_attendance_record(employee_id: int, record_date: str) -> Optional[Dict[str, Any]]:
     """Get attendance record for a specific employee on a specific date (YYYY-MM-DD)."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         db.row_factory = aiosqlite.Row
         async with db.execute("""
             SELECT * FROM attendance WHERE employee_id = ? AND date = ?
@@ -220,7 +220,7 @@ async def record_arrival(
     selfie_file: str = ""
 ) -> bool:
     """Record an employee's arrival time, location, and selfie photo."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         await db.execute("""
             INSERT INTO attendance (
                 employee_id, date, arrival_time, arrival_lat, arrival_lon,
@@ -249,7 +249,7 @@ async def record_departure(
     selfie_file: str = ""
 ) -> bool:
     """Record an employee's departure time, work minutes, and optional selfie."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         await db.execute("""
             UPDATE attendance
             SET departure_time = ?,
@@ -266,7 +266,7 @@ async def record_departure(
 
 async def mark_absent_if_not_present(employee_id: int, record_date: str):
     """Mark an employee as 'kelmadi' if no arrival recorded today."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         await db.execute("""
             INSERT INTO attendance (employee_id, date, status)
             VALUES (?, ?, 'kelmadi')
@@ -277,7 +277,7 @@ async def mark_absent_if_not_present(employee_id: int, record_date: str):
 
 async def get_today_attendance_all(record_date: str) -> List[Dict[str, Any]]:
     """Get all attendance records for today with employee details."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         db.row_factory = aiosqlite.Row
         async with db.execute("""
             SELECT 
@@ -303,7 +303,7 @@ async def get_today_attendance_all(record_date: str) -> List[Dict[str, Any]]:
 
 async def get_monthly_attendance_all(year_month: str) -> List[Dict[str, Any]]:
     """Get monthly attendance records for all approved employees (year_month: 'YYYY-MM')."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         db.row_factory = aiosqlite.Row
         async with db.execute("""
             SELECT 
@@ -327,7 +327,7 @@ async def get_monthly_attendance_all(year_month: str) -> List[Dict[str, Any]]:
 
 async def get_employee_monthly_records(employee_id: int, year_month: str) -> List[Dict[str, Any]]:
     """Get one employee's monthly attendance history."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         db.row_factory = aiosqlite.Row
         async with db.execute("""
             SELECT * FROM attendance
@@ -340,7 +340,7 @@ async def get_employee_monthly_records(employee_id: int, year_month: str) -> Lis
 
 async def get_employees_without_arrival(record_date: str) -> List[Dict[str, Any]]:
     """Get approved employees who have not recorded arrival for the specified date."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         db.row_factory = aiosqlite.Row
         async with db.execute("""
             SELECT e.* FROM employees e
@@ -355,7 +355,7 @@ async def get_employees_without_arrival(record_date: str) -> List[Dict[str, Any]
 
 async def save_absence_reason(employee_id: int, record_date: str, reason_text: str) -> int:
     """Store an explanation sent by an absent employee."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         async with db.execute("""
             INSERT INTO absence_reasons (employee_id, date, reason_text, is_reviewed)
             VALUES (?, ?, ?, 0);
@@ -366,7 +366,7 @@ async def save_absence_reason(employee_id: int, record_date: str, reason_text: s
 
 async def get_recent_absence_reasons(limit: int = 20) -> List[Dict[str, Any]]:
     """Fetch recent absence reasons submitted by employees."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         db.row_factory = aiosqlite.Row
         async with db.execute("""
             SELECT r.*, e.full_name, e.phone
@@ -377,3 +377,4 @@ async def get_recent_absence_reasons(limit: int = 20) -> List[Dict[str, Any]]:
         """, (limit,)) as cursor:
             rows = await cursor.fetchall()
             return [dict(r) for r in rows]
+

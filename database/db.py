@@ -17,9 +17,12 @@ logger = logging.getLogger(__name__)
 
 
 async def init_db():
-    """Initialize the SQLite database with required tables and default settings."""
-    async with aiosqlite.connect(DB_PATH) as db:
+    """Initialize the SQLite database with required tables, concurrency pragmas, and default settings."""
+    async with aiosqlite.connect(DB_PATH, timeout=30.0) as db:
         await db.execute("PRAGMA journal_mode=WAL;")
+        await db.execute("PRAGMA busy_timeout=30000;")
+        await db.execute("PRAGMA synchronous=NORMAL;")
+        await db.execute("PRAGMA cache_size=-64000;") # 64MB cache
         
         # Settings table
         await db.execute("""
@@ -95,6 +98,13 @@ async def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         """)
+        
+        # Performance Indexes for High Traffic Concurrency
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_attendance_date ON attendance(date);")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_attendance_emp_date ON attendance(employee_id, date);")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_employees_tg_id ON employees(telegram_id);")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_employees_login ON employees(login);")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_absence_emp_date ON absence_reasons(employee_id, date);")
         
         # Seed default settings if not exists
         default_qr_token = "SHOP_QR_" + secrets.token_hex(6).upper()

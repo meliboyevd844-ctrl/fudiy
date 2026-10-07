@@ -3,3 +3,15 @@ __pycache__/
 .env
 .system_generated/
 *.log
+*.db
+*.db-wal
+*.db-shm
+data/*.db
+data/qrcodes/*
+data/reports/*
+data/qr_scans/*
+data/selfies/*
+!data/qrcodes/.gitkeep
+!data/reports/.gitkeep
+!data/qr_scans/.gitkeep
+!data/selfies/.gitkeep

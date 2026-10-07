@@ -42,6 +42,6 @@ DEFAULT_WORK_END_TIME = os.getenv("WORK_END_TIME", "18:00")
 DEFAULT_LATE_GRACE_MINUTES = int(os.getenv("LATE_GRACE_MINUTES", "15"))
 
 # WebApp Settings
-WEBAPP_PORT = int(os.getenv("WEBAPP_PORT", "8080"))
+WEBAPP_PORT = int(os.getenv("PORT", os.getenv("WEBAPP_PORT", "8080")))
 WEBAPP_HOST = os.getenv("WEBAPP_HOST", "0.0.0.0")
 WEBAPP_BASE_URL = os.getenv("WEBAPP_BASE_URL", f"http://localhost:{WEBAPP_PORT}").rstrip("/")
